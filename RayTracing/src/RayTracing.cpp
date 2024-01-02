@@ -14,15 +14,18 @@ public:
 	ExampleLayer() : m_camera(45.0f, 0.01f, 1000.0f)
 	{
 		Sphere sphere;
-		sphere.Albedo = glm::vec3{ 1.0f, 0.0f, 1.0f };
-		sphere.Position = glm::vec3{ 0.0f, 0.0f, 0.0f };
-		sphere.Radius = 0.5f;
-		m_scene.Spaeres.emplace_back(std::move(sphere));
+		
+		// Blue Grund
+		sphere.Albedo = glm::vec3{ 0.2f, 0.2f, 0.8f };
+		sphere.Position = glm::vec3{ 0.0f, -100.0f, 0.0f };
+		sphere.Radius = 100.0f;
+		m_scene.Spheres.emplace_back(std::move(sphere));
 
-		sphere.Albedo = glm::vec3{ 0.0f, 1.0f, 0.0f };
-		sphere.Position = glm::vec3{ 1.0f, 1.0f, -5.0f };
-		sphere.Radius = 2.0f;
-		m_scene.Spaeres.emplace_back(std::move(sphere));
+		// White Sphere
+		sphere.Albedo = glm::vec3{ 1.0f, 1.0f, 1.0f };
+		sphere.Position = glm::vec3{ 0.0f, 1.0f, 0.0f };
+		sphere.Radius = 1.0f;
+		m_scene.Spheres.emplace_back(std::move(sphere));
 	}
 
 	virtual void OnUpdate(float ts) override
@@ -32,27 +35,26 @@ public:
 
 	virtual void OnUIRender() override
 	{
-		ImGui::Begin("Settings");
+		// FPS
+		ImGui::Begin("Info");
 		ImGui::Text("Last Frame: %.3fms", m_lastFrameTime);
-		if (ImGui::Button("Render"))
-		{
-			Render();
-		}
 		ImGui::End();
 
+		// Entity List & Details
 		ImGui::Begin("Scene");
-		for (size_t i = 0; i < m_scene.Spaeres.size(); ++i)
+		for (size_t i = 0; i < m_scene.Spheres.size(); ++i)
 		{
 			ImGui::PushID(i);
-			Sphere &sphere = m_scene.Spaeres[i];
+			Sphere &sphere = m_scene.Spheres[i];
 			ImGui::DragFloat3("Position", glm::value_ptr(sphere.Position), 0.1f);
-			ImGui::DragFloat("Radius", &sphere.Radius, 0.1f);
+			ImGui::DragFloat("Radius", &sphere.Radius, 0.1f, 0.0f, 100.0f);
 			ImGui::ColorEdit3("Albedo", glm::value_ptr(sphere.Albedo));
 			ImGui::Separator();
 			ImGui::PopID();
 		}
 		ImGui::End();
 
+		// Scene View
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 		ImGui::Begin("View Port");
 		m_viewportWidth = ImGui::GetContentRegionAvail().x;

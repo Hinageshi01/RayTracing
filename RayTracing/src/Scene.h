@@ -12,5 +12,7 @@ struct Sphere
 
 struct Scene
 {
-	std::vector<Sphere> Spaeres;
+	static constexpr uint32_t InvalidIndex = std::numeric_limits<uint32_t>::max();
+
+	std::vector<Sphere> Spheres;
 };
