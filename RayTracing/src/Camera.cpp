@@ -10,8 +10,10 @@ using namespace Walnut;
 Camera::Camera(float verticalFOV, float nearClip, float farClip)
 	: m_VerticalFOV(verticalFOV), m_NearClip(nearClip), m_FarClip(farClip)
 {
-	m_ForwardDirection = glm::vec3{ 0.0f, 0.0f, -1.0f };
-	m_Position = glm::vec3{ 0.0f, 0.0f, 6.0f };
+	m_ForwardDirection = glm::vec3{ 0.0f, -0.2f, -1.0f };
+	m_Position = glm::vec3{ 0.0f, 2.0f, 8.0f };
+
+	RecalculateView();
 }
 
 bool Camera::OnUpdate(float ts)
@@ -33,9 +35,7 @@ bool Camera::OnUpdate(float ts)
 	constexpr glm::vec3 upDirection{ 0.0f, 1.0f, 0.0f };
 	glm::vec3 rightDirection = glm::cross(m_ForwardDirection, upDirection);
 
-	float speed = 5.0f;
-
-	// Movement
+	constexpr float speed = 5.0f;
 	if (Input::IsKeyDown(KeyCode::W))
 	{
 		m_Position += m_ForwardDirection * speed * ts;

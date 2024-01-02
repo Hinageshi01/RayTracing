@@ -14,18 +14,34 @@ public:
 	ExampleLayer() : m_camera(45.0f, 0.01f, 1000.0f)
 	{
 		Sphere sphere;
-		
-		// Blue Grund
-		sphere.Albedo = glm::vec3{ 0.2f, 0.2f, 0.8f };
+		Material material;
+
+		// Grund
+		material.Albedo = glm::vec3{ 0.5f, 0.5f, 0.5f };
+		material.Roughness = 0.1f;
+		material.Metallic = 0.0f;
+		m_scene.Materials.emplace_back(std::move(material));
+
+		sphere.MateralIndex = m_scene.Materials.size() - 1;
 		sphere.Position = glm::vec3{ 0.0f, -100.0f, 0.0f };
 		sphere.Radius = 100.0f;
 		m_scene.Spheres.emplace_back(std::move(sphere));
 
 		// White Sphere
-		sphere.Albedo = glm::vec3{ 1.0f, 1.0f, 1.0f };
+		material.Albedo = glm::vec3{ 1.0f, 0.3f, 0.9f };
+		material.Roughness = 0.01f;
+		material.Metallic = 0.0f;
+		m_scene.Materials.emplace_back(std::move(material));
+
+		sphere.MateralIndex = m_scene.Materials.size() - 1;
 		sphere.Position = glm::vec3{ 0.0f, 1.0f, 0.0f };
 		sphere.Radius = 1.0f;
 		m_scene.Spheres.emplace_back(std::move(sphere));
+
+		// Sky
+		m_scene.SkyColor = glm::vec3{ 0.37f, 0.53f, 1.0f };
+
+		m_renderer.SetBounces(4);
 	}
 
 	virtual void OnUpdate(float ts) override
@@ -35,21 +51,38 @@ public:
 
 	virtual void OnUIRender() override
 	{
-		// FPS
-		ImGui::Begin("Info");
+		// Infos
+		ImGui::Begin("Setting");
 		ImGui::Text("Last Frame: %.3fms", m_lastFrameTime);
+		ImGui::Separator();
+		ImGui::DragInt("Bounces", &m_renderer.GetBounces(), 0.05f, 0, 8);
 		ImGui::End();
 
-		// Entity List & Details
+		// Object List
 		ImGui::Begin("Scene");
+		ImGui::ColorEdit3("Albedo", glm::value_ptr(m_scene.SkyColor));
+		ImGui::Separator();
 		for (size_t i = 0; i < m_scene.Spheres.size(); ++i)
 		{
 			ImGui::PushID(i);
 			Sphere &sphere = m_scene.Spheres[i];
 			ImGui::DragFloat3("Position", glm::value_ptr(sphere.Position), 0.1f);
 			ImGui::DragFloat("Radius", &sphere.Radius, 0.1f, 0.0f, 100.0f);
-			ImGui::ColorEdit3("Albedo", glm::value_ptr(sphere.Albedo));
+			ImGui::DragInt("Material", &sphere.MateralIndex, 1, 0, (int)m_scene.Materials.size() - 1);
 			ImGui::Separator();
+			ImGui::PopID();
+		}
+		ImGui::End();
+
+		// Material
+		ImGui::Begin("Material");
+		for (size_t i = 0; i < m_scene.Materials.size(); ++i)
+		{
+			Material& material = m_scene.Materials[i];
+			ImGui::PushID(i);
+			ImGui::ColorEdit3("Albedo", glm::value_ptr(material.Albedo));
+			ImGui::DragFloat("Roughness", &material.Roughness, 0.01f, 0.0f, 1.0f);
+			ImGui::DragFloat("Metallic", &material.Metallic, 0.01f, 0.0f, 1.0f);
 			ImGui::PopID();
 		}
 		ImGui::End();

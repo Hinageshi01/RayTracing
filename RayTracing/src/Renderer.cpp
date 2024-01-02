@@ -17,11 +17,6 @@ uint32_t ConvertToRGBA8(glm::vec4 vec4Color)
 
 }
 
-Renderer::~Renderer()
-{
-	delete[] m_pFinalImageData;
-}
-
 void Renderer::OnResize(uint32_t width, uint32_t height)
 {
 	if (m_pFinalImage && m_pFinalImage->GetWidth() == width && m_pFinalImage->GetHeight() == height)
@@ -72,29 +67,28 @@ glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
 
 	float weight;
 	glm::vec3 finalColor{ 0.0f };
-	constexpr uint32_t bounces = 2;
-	for (uint32_t i = 0; i < bounces; ++i)
+	for (uint32_t i = 0; i < m_bounces; ++i)
 	{
-		weight = std::pow(0.8f, i);
+		weight = std::pow(0.5f, i);
 
 		HitPayload payload = TraceRay(ray);
 		if (payload.HitDistance < 0.0f)
 		{
-			constexpr glm::vec3 skyColo{ 0.0f };
-			finalColor += skyColo * weight;
+			finalColor += m_pScene->SkyColor * weight;
 			break;
 		}
 
-		assert(payload.ObjectIndex < m_pScene->Spheres.size());
 		const Sphere &sphere = m_pScene->Spheres[payload.ObjectIndex];
+		const Material &material = m_pScene->Materials[sphere.MateralIndex];
 
 		glm::vec3 lightDir = glm::normalize(glm::vec3{ -1.0f });
 		float lightIntensity = glm::max(glm::dot(payload.WorldNormal, -lightDir), 0.0f);
-		finalColor += sphere.Albedo * lightIntensity * weight;
+		finalColor += material.Albedo * lightIntensity * weight;
 
 		// Avoid intersecting with current object.
 		ray.Origin = payload.WorldPosition + payload.WorldNormal * 0.0001f;
-		ray.Direction = glm::reflect(ray.Direction, payload.WorldNormal);
+		ray.Direction = glm::reflect(ray.Direction,
+			payload.WorldNormal + material.Roughness * Walnut::Random::Vec3(-0.5f, 0.5f));
 	}
 
 	return glm::vec4{ std::move(finalColor), 1.0f };
