@@ -26,6 +26,10 @@ public:
 	void Render(const Scene &scene, const Camera &camera);
 	void OnResize(uint32_t width, uint32_t height);
 
+	void ResetAccumulate();
+	void StartAccumulate() { m_isAccumulate = true; }
+	void StopAccumulate() { m_isAccumulate = false; }
+
 	void SetBounces(int bounces) { m_bounces = bounces; }
 	int& GetBounces() { return m_bounces; }
 	const int & GetBounces() const { return m_bounces; }
@@ -42,10 +46,14 @@ private:
 	HitPayload Miss(const Ray &ray);
 
 	int m_bounces = 1;
+	bool m_isAccumulate = true;
+	uint32_t m_frameIndex = 1;
 
 	const Scene *m_pScene = nullptr;
 	const Camera *m_pCamera = nullptr;
 
 	uint32_t *m_pFinalImageData = nullptr;
+	glm::vec4 *m_pAccumulateData = nullptr;
+
 	std::shared_ptr<Walnut::Image> m_pFinalImage;
 };

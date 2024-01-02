@@ -29,7 +29,7 @@ public:
 
 		// White Sphere
 		material.Albedo = glm::vec3{ 1.0f, 0.3f, 0.9f };
-		material.Roughness = 0.01f;
+		material.Roughness = 1.0f;
 		material.Metallic = 0.0f;
 		m_scene.Materials.emplace_back(std::move(material));
 
@@ -41,12 +41,19 @@ public:
 		// Sky
 		m_scene.SkyColor = glm::vec3{ 0.37f, 0.53f, 1.0f };
 
-		m_renderer.SetBounces(4);
+		m_renderer.SetBounces(2);
 	}
 
 	virtual void OnUpdate(float ts) override
 	{
-		m_camera.OnUpdate(ts);
+		if (m_camera.OnUpdate(ts))
+		{
+			m_renderer.StopAccumulate();
+		}
+		else
+		{
+			m_renderer.StartAccumulate();
+		}
 	}
 
 	virtual void OnUIRender() override
@@ -55,7 +62,10 @@ public:
 		ImGui::Begin("Setting");
 		ImGui::Text("Last Frame: %.3fms", m_lastFrameTime);
 		ImGui::Separator();
-		ImGui::DragInt("Bounces", &m_renderer.GetBounces(), 0.05f, 0, 8);
+		if (ImGui::DragInt("Bounces", &m_renderer.GetBounces(), 0.05f, 0, 8))
+		{
+			m_renderer.ResetAccumulate();
+		}
 		ImGui::End();
 
 		// Object List

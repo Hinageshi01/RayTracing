@@ -35,6 +35,15 @@ void Renderer::OnResize(uint32_t width, uint32_t height)
 
 	delete[] m_pFinalImageData;
 	m_pFinalImageData = new uint32_t[width * height];
+
+	delete[] m_pAccumulateData;
+	m_pAccumulateData = new glm::vec4[width * height];
+}
+
+void Renderer::ResetAccumulate()
+{
+	m_frameIndex = 1;
+	std::memset(m_pAccumulateData, 0, m_pFinalImage->GetWidth() * m_pFinalImage->GetHeight() * sizeof(glm::vec4));
 }
 
 void Renderer::Render(const Scene &scene, const Camera &camera)
@@ -45,16 +54,37 @@ void Renderer::Render(const Scene &scene, const Camera &camera)
 	const uint32_t imageWidth = m_pFinalImage->GetWidth();
 	const uint32_t imageHeight = m_pFinalImage->GetHeight();
 
+	if (!m_isAccumulate)
+	{
+		// Clear accumulate per frame
+		m_frameIndex = 1;
+		std::memset(m_pAccumulateData, 0, imageWidth * imageHeight * sizeof(glm::vec4));
+	}
+
 	for (uint32_t y = 0; y < imageHeight; ++y)
 	{
 		for (uint32_t x = 0; x < imageWidth; ++x)
 		{
-			glm::vec4 color = PerPixel(x, y);
-			m_pFinalImageData[x + y * imageWidth] = ConvertToRGBA8(std::move(color));
+			const size_t index = x + y * imageWidth;
+
+			m_pAccumulateData[index] += PerPixel(x, y);
+			glm::vec4 color = m_pAccumulateData[index];
+			color /= static_cast<float>(m_frameIndex);
+
+			m_pFinalImageData[index] = ConvertToRGBA8(color);
 		}
 	}
 
 	m_pFinalImage->SetData(m_pFinalImageData);
+
+	if (m_isAccumulate)
+	{
+		++m_frameIndex;
+	}
+	else
+	{
+		m_frameIndex = 1;
+	}
 }
 
 glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
@@ -65,11 +95,10 @@ glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
 	ray.Origin = m_pCamera->GetPosition();
 	ray.Direction = m_pCamera->GetRayDirections()[x + y * m_pFinalImage->GetWidth()];
 
-	float weight;
 	glm::vec3 finalColor{ 0.0f };
 	for (uint32_t i = 0; i < m_bounces; ++i)
 	{
-		weight = std::pow(0.5f, i);
+		float weight = std::pow(0.5f, i);
 
 		HitPayload payload = TraceRay(ray);
 		if (payload.HitDistance < 0.0f)
