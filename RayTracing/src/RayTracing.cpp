@@ -41,7 +41,7 @@ public:
 		// Sky
 		m_scene.SkyColor = glm::vec3{ 0.37f, 0.53f, 1.0f };
 
-		m_renderer.SetBounces(2);
+		m_renderer.SetBounces(4);
 	}
 
 	virtual void OnUpdate(float ts) override
@@ -84,7 +84,7 @@ public:
 		}
 		ImGui::End();
 
-		// Material
+		// Material List
 		ImGui::Begin("Material");
 		for (size_t i = 0; i < m_scene.Materials.size(); ++i)
 		{
@@ -93,6 +93,7 @@ public:
 			ImGui::ColorEdit3("Albedo", glm::value_ptr(material.Albedo));
 			ImGui::DragFloat("Roughness", &material.Roughness, 0.01f, 0.0f, 1.0f);
 			ImGui::DragFloat("Metallic", &material.Metallic, 0.01f, 0.0f, 1.0f);
+			ImGui::Separator();
 			ImGui::PopID();
 		}
 		ImGui::End();

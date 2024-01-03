@@ -46,6 +46,7 @@ private:
 	HitPayload Miss(const Ray &ray);
 
 	int m_bounces = 1;
+
 	bool m_isAccumulate = true;
 	uint32_t m_frameIndex = 1;
 

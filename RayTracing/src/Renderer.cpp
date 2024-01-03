@@ -38,6 +38,9 @@ void Renderer::OnResize(uint32_t width, uint32_t height)
 
 	delete[] m_pAccumulateData;
 	m_pAccumulateData = new glm::vec4[width * height];
+
+	m_frameIndex = 1;
+	std::memset(m_pAccumulateData, 0, width * height * sizeof(glm::vec4));
 }
 
 void Renderer::ResetAccumulate()
@@ -50,13 +53,15 @@ void Renderer::Render(const Scene &scene, const Camera &camera)
 {
 	m_pScene = &scene;
 	m_pCamera = &camera;
+	assert(m_pScene && m_pCamera && m_pFinalImage);
 
 	const uint32_t imageWidth = m_pFinalImage->GetWidth();
 	const uint32_t imageHeight = m_pFinalImage->GetHeight();
 
-	if (!m_isAccumulate)
+	static bool s_lastFrameAccumulateState = m_isAccumulate;
+	if (!m_isAccumulate || !s_lastFrameAccumulateState)
 	{
-		// Clear accumulate per frame
+		// Clear accumulate
 		m_frameIndex = 1;
 		std::memset(m_pAccumulateData, 0, imageWidth * imageHeight * sizeof(glm::vec4));
 	}
@@ -68,10 +73,7 @@ void Renderer::Render(const Scene &scene, const Camera &camera)
 			const size_t index = x + y * imageWidth;
 
 			m_pAccumulateData[index] += PerPixel(x, y);
-			glm::vec4 color = m_pAccumulateData[index];
-			color /= static_cast<float>(m_frameIndex);
-
-			m_pFinalImageData[index] = ConvertToRGBA8(color);
+			m_pFinalImageData[index] = ConvertToRGBA8(m_pAccumulateData[index] / static_cast<float>(m_frameIndex));
 		}
 	}
 
@@ -81,16 +83,12 @@ void Renderer::Render(const Scene &scene, const Camera &camera)
 	{
 		++m_frameIndex;
 	}
-	else
-	{
-		m_frameIndex = 1;
-	}
+
+	s_lastFrameAccumulateState = m_isAccumulate;
 }
 
 glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
 {
-	assert(m_pScene && m_pCamera);
-
 	Ray ray;
 	ray.Origin = m_pCamera->GetPosition();
 	ray.Direction = m_pCamera->GetRayDirections()[x + y * m_pFinalImage->GetWidth()];
