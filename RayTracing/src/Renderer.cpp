@@ -1,5 +1,6 @@
 #include "Renderer.h"
 
+#include <execution>
 #include <Walnut/Random.h>
 
 namespace
@@ -41,6 +42,17 @@ void Renderer::OnResize(uint32_t width, uint32_t height)
 
 	m_frameIndex = 1;
 	std::memset(m_pAccumulateData, 0, width * height * sizeof(glm::vec4));
+
+	m_imageHorizontalIter.resize(width);
+	for (uint32_t i = 0; i < width; ++i)
+	{
+		m_imageHorizontalIter[i] = i;
+	}
+	m_imageVerticallIter.resize(height);
+	for (uint32_t i = 0; i < height; ++i)
+	{
+		m_imageVerticallIter[i] = i;
+	}
 }
 
 void Renderer::ResetAccumulate()
@@ -66,16 +78,31 @@ void Renderer::Render(const Scene &scene, const Camera &camera)
 		std::memset(m_pAccumulateData, 0, imageWidth * imageHeight * sizeof(glm::vec4));
 	}
 
+#define PARALLEL 0
+
+#if PARALLEL
+	std::for_each(std::execution::par, m_imageVerticallIter.begin(), m_imageVerticallIter.end(),
+		[this](uint32_t y)
+		{
+			const uint32_t imageWidth = m_pFinalImage->GetWidth();
+			for (uint32_t x = 0; x < imageWidth; ++x)
+			{
+				const size_t index = x + y * imageWidth;
+				m_pAccumulateData[index] += PerPixel(x, y);
+				m_pFinalImageData[index] = ConvertToRGBA8(m_pAccumulateData[index] / static_cast<float>(m_frameIndex));
+			}
+		});
+#else
 	for (uint32_t y = 0; y < imageHeight; ++y)
 	{
 		for (uint32_t x = 0; x < imageWidth; ++x)
 		{
 			const size_t index = x + y * imageWidth;
-
 			m_pAccumulateData[index] += PerPixel(x, y);
 			m_pFinalImageData[index] = ConvertToRGBA8(m_pAccumulateData[index] / static_cast<float>(m_frameIndex));
 		}
 	}
+#endif
 
 	m_pFinalImage->SetData(m_pFinalImageData);
 

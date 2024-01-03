@@ -46,9 +46,11 @@ private:
 	HitPayload Miss(const Ray &ray);
 
 	int m_bounces = 1;
-
 	bool m_isAccumulate = true;
 	uint32_t m_frameIndex = 1;
+
+	std::vector<uint32_t> m_imageHorizontalIter;
+	std::vector<uint32_t> m_imageVerticallIter;
 
 	const Scene *m_pScene = nullptr;
 	const Camera *m_pCamera = nullptr;
