@@ -78,7 +78,7 @@ void Renderer::Render(const Scene &scene, const Camera &camera)
 		std::memset(m_pAccumulateData, 0, imageWidth * imageHeight * sizeof(glm::vec4));
 	}
 
-#define PARALLEL 0
+#define PARALLEL 1
 
 #if PARALLEL
 	std::for_each(std::execution::par, m_imageVerticallIter.begin(), m_imageVerticallIter.end(),
