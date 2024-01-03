@@ -120,24 +120,22 @@ glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
 	ray.Origin = m_pCamera->GetPosition();
 	ray.Direction = m_pCamera->GetRayDirections()[x + y * m_pFinalImage->GetWidth()];
 
-	glm::vec3 finalColor{ 0.0f };
+	glm::vec3 contribution{ 1.0f };
+	glm::vec3 light{ 0.0f };
 	for (uint32_t i = 0; i < m_bounces; ++i)
 	{
-		float weight = std::pow(0.5f, i);
-
 		HitPayload payload = TraceRay(ray);
 		if (payload.HitDistance < 0.0f)
 		{
-			finalColor += m_pScene->SkyColor * weight;
+			light += m_pScene->SkyColor * contribution;
 			break;
 		}
 
 		const Sphere &sphere = m_pScene->Spheres[payload.ObjectIndex];
 		const Material &material = m_pScene->Materials[sphere.MateralIndex];
 
-		glm::vec3 lightDir = glm::normalize(glm::vec3{ -1.0f });
-		float lightIntensity = glm::max(glm::dot(payload.WorldNormal, -lightDir), 0.0f);
-		finalColor += material.Albedo * lightIntensity * weight;
+		light += (material.EmissiveColor * material.EmissiveIntensity);
+		contribution *= material.Albedo;
 
 		// Avoid intersecting with current object.
 		ray.Origin = payload.WorldPosition + payload.WorldNormal * 0.0001f;
@@ -145,7 +143,7 @@ glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
 			payload.WorldNormal + material.Roughness * Walnut::Random::Vec3(-0.5f, 0.5f));
 	}
 
-	return glm::vec4{ std::move(finalColor), 1.0f };
+	return glm::vec4{ std::move(light), 1.0f };
 }
 
 HitPayload Renderer::TraceRay(const Ray &ray)
