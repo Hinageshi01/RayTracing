@@ -38,18 +38,29 @@ public:
 		sphere.Radius = 1.0f;
 		m_scene.Spheres.emplace_back(std::move(sphere));
 
-		// Mirror Sphere
+		// Mirror Sphere 1
 		material.Albedo = glm::vec3{ 1.0f };
-		material.Roughness = 0.1f;
-		material.Metallic = 0.0f;
+		material.Roughness = 0.01f;
+		material.Metallic = 1.0f;
 		m_scene.Materials.emplace_back(std::move(material));
 
 		sphere.MateralIndex = m_scene.Materials.size() - 1;
-		sphere.Position = glm::vec3{ -3.0f, 1.0f, 0.0f };
+		sphere.Position = glm::vec3{ -2.5f, 1.0f, 2.0f };
 		sphere.Radius = 1.0f;
 		m_scene.Spheres.emplace_back(std::move(sphere));
 
-		// Emissive Sphere
+		// Mirror Sphere 2
+		material.Albedo = glm::vec3{ 1.0f };
+		material.Roughness = 0.05f;
+		material.Metallic = 1.0f;
+		m_scene.Materials.emplace_back(std::move(material));
+
+		sphere.MateralIndex = m_scene.Materials.size() - 1;
+		sphere.Position = glm::vec3{ 2.5f, 1.0f, 2.0f };
+		sphere.Radius = 1.0f;
+		m_scene.Spheres.emplace_back(std::move(sphere));
+
+		// Emissive Sphere 1
 		material.Albedo = glm::vec3{ 1.0f };
 		material.Roughness = 1.0f;
 		material.Metallic = 0.0f;
@@ -60,6 +71,19 @@ public:
 		sphere.MateralIndex = m_scene.Materials.size() - 1;
 		sphere.Position = glm::vec3{ 30.0f, 20.0f, -30.0f };
 		sphere.Radius = 30.0f;
+		m_scene.Spheres.emplace_back(std::move(sphere));
+
+		// Emissive Sphere 2
+		material.Albedo = glm::vec3{ 1.0f };
+		material.Roughness = 1.0f;
+		material.Metallic = 0.0f;
+		material.EmissiveColor = glm::vec3{ 0.1f, 0.4f, 0.9f };
+		material.EmissiveIntensity = 3.0f;
+		m_scene.Materials.emplace_back(std::move(material));
+
+		sphere.MateralIndex = m_scene.Materials.size() - 1;
+		sphere.Position = glm::vec3{ -0.8f, 0.3f, 4.3 };
+		sphere.Radius = 0.2f;
 		m_scene.Spheres.emplace_back(std::move(sphere));
 
 		// Sky
@@ -106,8 +130,8 @@ public:
 		{
 			ImGui::PushID(i);
 			Sphere &sphere = m_scene.Spheres[i];
-			CheckReset(ImGui::DragFloat3("Position", glm::value_ptr(sphere.Position), 0.1f));
-			CheckReset(ImGui::DragFloat("Radius", &sphere.Radius, 0.1f, 0.0f, 100.0f));
+			CheckReset(ImGui::DragFloat3("Position", glm::value_ptr(sphere.Position), 0.01f));
+			CheckReset(ImGui::DragFloat("Radius", &sphere.Radius, 0.01f, 0.0f, 100.0f));
 			CheckReset(ImGui::DragInt("Material", &sphere.MateralIndex, 1, 0, (int)m_scene.Materials.size() - 1));
 			ImGui::Separator();
 			ImGui::PopID();
@@ -124,7 +148,7 @@ public:
 			CheckReset(ImGui::DragFloat("Roughness", &material.Roughness, 0.01f, 0.0f, 1.0f));
 			CheckReset(ImGui::DragFloat("Metallic", &material.Metallic, 0.01f, 0.0f, 1.0f));
 			CheckReset(ImGui::ColorEdit3("Emissive Color", glm::value_ptr(material.EmissiveColor)));
-			CheckReset(ImGui::DragFloat("Emissive Intensity", &material.EmissiveIntensity, 0.1f, 0.0f, 100.0f));
+			CheckReset(ImGui::DragFloat("Emissive Intensity", &material.EmissiveIntensity, 0.01f, 0.0f, 100.0f));
 			ImGui::Separator();
 			ImGui::PopID();
 		}

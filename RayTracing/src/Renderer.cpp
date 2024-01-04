@@ -6,7 +6,7 @@
 namespace
 {
 
-uint32_t ConvertToRGBA8(glm::vec4 vec4Color)
+__forceinline uint32_t ConvertToRGBA8(glm::vec4 vec4Color)
 {
 	vec4Color = glm::clamp(std::move(vec4Color), glm::vec4{ 0.0f }, glm::vec4{ 1.0f });
 
@@ -14,6 +14,27 @@ uint32_t ConvertToRGBA8(glm::vec4 vec4Color)
 		(static_cast<uint8_t>(vec4Color.z * 255.0f) << 16) |
 		(static_cast<uint8_t>(vec4Color.y * 255.0f) << 8) |
 		(static_cast<uint8_t>(vec4Color.x * 255.0f));
+}
+
+__forceinline uint32_t PCG_Hash(uint32_t input)
+{
+	uint32_t state = input * 747796405u + 2891336453u;
+	uint32_t word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+	return (word >> 22u) ^ word;
+}
+
+__forceinline float RandomFloat(uint32_t &seed)
+{
+	seed = PCG_Hash(seed);
+	return (float)seed / (float)std::numeric_limits<uint32_t>::max();
+}
+
+__forceinline glm::vec3 InUnitSphere(uint32_t &seed)
+{
+	return glm::normalize(glm::vec3{
+		RandomFloat(seed) * 2.0f - 1.0f,
+		RandomFloat(seed) * 2.0f - 1.0f,
+		RandomFloat(seed) * 2.0f - 1.0f });	
 }
 
 }
@@ -116,14 +137,20 @@ void Renderer::Render(const Scene &scene, const Camera &camera)
 
 glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
 {
+	size_t pixelIndex = x + y * m_pFinalImage->GetWidth();
+
 	Ray ray;
 	ray.Origin = m_pCamera->GetPosition();
-	ray.Direction = m_pCamera->GetRayDirections()[x + y * m_pFinalImage->GetWidth()];
+	ray.Direction = m_pCamera->GetRayDirections()[pixelIndex];
 
+	// per frame, per pixel, per bounce
+	uint32_t seed = pixelIndex * m_frameIndex;
 	glm::vec3 contribution{ 1.0f };
 	glm::vec3 light{ 0.0f };
 	for (uint32_t i = 0; i < m_bounces; ++i)
 	{
+		seed += i;
+
 		HitPayload payload = TraceRay(ray);
 		if (payload.HitDistance < 0.0f)
 		{
@@ -140,7 +167,8 @@ glm::vec4 Renderer::PerPixel(uint32_t x, uint32_t y)
 		// Avoid intersecting with current object.
 		ray.Origin = payload.WorldPosition + payload.WorldNormal * 0.0001f;
 		ray.Direction = glm::reflect(ray.Direction,
-			payload.WorldNormal + material.Roughness * Walnut::Random::Vec3(-0.5f, 0.5f));
+			payload.WorldNormal + material.Roughness * InUnitSphere(seed));
+		// Walnut::Random::InUnitSphere()
 	}
 
 	return glm::vec4{ std::move(light), 1.0f };
